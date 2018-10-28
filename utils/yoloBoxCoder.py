@@ -201,5 +201,5 @@ def YOLOBoxPostProcess(xyCenterBoxes, numClass, objectThreshold=0.65, nmsThresho
             classBoxes = detectionResultsNp[boxIdx,:7]
             nmsClassBoxes = (classBoxes[nms(classBoxes, nmsThreshold),:])[:,[0,1,2,3,4,6]] # Remove class conf column
             imageOutputBoxes = np.vstack((imageOutputBoxes, nmsClassBoxes))
-        boxesOutput.append(imageOutputBoxes.astype(np.int32))
+        boxesOutput.append(imageOutputBoxes)
     return boxesOutput
