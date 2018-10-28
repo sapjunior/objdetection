@@ -26,8 +26,8 @@ class YOLOBoxCoder():
 
     def _getDefaultAnchor(self):
         #### Anchor Generation ####
-        FloatTensor = torch.FloatTensor
-        LongTensor =  torch.LongTensor
+        FloatTensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+        LongTensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
         for featMapIdx, inputFeatMapSize in enumerate(self.inputFeatMapSizes):
             inputFeatMapHeight, inputFeatMapWidth = inputFeatMapSize
 
@@ -49,16 +49,18 @@ class YOLOBoxCoder():
                 inputFeatMapHeight, 1).t().repeat(self.numAnchors[featMapIdx], 1, 1)
 
             # Calculate anchor w, h
-            anchorW = torch.tensor(scaledAnchors).index_select(1, torch.LongTensor([0]))
-            anchorH = torch.tensor(scaledAnchors).index_select(1, torch.LongTensor([1]))
+            anchorW = torch.tensor(scaledAnchors).index_select(1, LongTensor([0]))
+            anchorH = torch.tensor(scaledAnchors).index_select(1, LongTensor([1]))
             anchorW = anchorW.repeat(1, 1, inputFeatMapHeight * inputFeatMapWidth).view(gridX.shape)
             anchorH = anchorH.repeat(1, 1, inputFeatMapHeight * inputFeatMapWidth).view(gridY.shape)
             
+            '''
             if torch.cuda.is_available():
                 gridX = gridX.cuda()
                 gridY = gridY.cuda()
                 anchorH = anchorH.cuda()
                 anchorW = anchorW.cuda()
+            '''
 
             self.gridX.append(gridX)
             self.gridY.append(gridY)
@@ -152,9 +154,7 @@ class YOLOBoxCoder():
 
             # Results
             _scale = torch.tensor([self.strideWidth[featMapIdx], self.strideHeight[featMapIdx]] * 2)
-            if torch.cuda.is_available():
-                _scale = _scale.cuda()
-
+            
             output = torch.cat((predBoxes.view(batchSize, -1, 4) * _scale, conf.view(
                 batchSize, -1, 1), predCls.view(batchSize, -1, self.numClass)), -1)
 
